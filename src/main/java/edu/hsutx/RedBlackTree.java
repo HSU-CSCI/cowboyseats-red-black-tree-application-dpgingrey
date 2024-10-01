@@ -21,8 +21,8 @@ public class RedBlackTree<E> {
     int size;
 
     protected class Node {
-        public String key;
-        public E value;
+        public String key; //seat row
+        public E value;    //seat number
         public Node left;
         public Node right;
         public Node parent;
@@ -39,14 +39,29 @@ public class RedBlackTree<E> {
 
         // TODO - add comments as appropriate including a javadoc for each method
         public int getDepth() {
-            // TODO - calculate the depth of the node and return an int value.
+            // TODO - calculate the depth of the node and return an int value
             // Hint: follow parent pointers up to the root and count steps
-            return 0;
+            Node cur = this;
+            int count = 1;
+
+            while(cur.parent != null){
+                cur = cur.parent;
+                count++;
+            }
+            return count;
         }
 
         public int getBlackDepth() {
             // TODO - calculate the depth of the node counting only black nodes and return an int value
-            return 0;
+            Node cur = this;
+            int count = 1;
+
+            while(cur.parent != null){
+                if(cur.color == false)  //false = black
+                    count++;
+                cur = cur.parent;
+            }
+            return count;
         }
     }
 
@@ -61,6 +76,53 @@ public class RedBlackTree<E> {
         // 1. Insert the node as you would in a regular BST.
         // 2. Recolor and rotate to restore Red-Black Tree properties.
         // Make sure to add 1 to size if node is successfully added
+
+        /*Node nodeSpot = find(key);
+        Node newNode;
+
+        if(root == null) {
+            root = new Node(key, value, null, true);  //new node inserted is red
+            root.left = null;
+            root.right = null;
+            size++;
+        }else if(! (nodeSpot.key.equals(key)) ){
+            newNode = new Node(key, value, nodeSpot, true);  //new node inserted is red
+            newNode.left = null;
+            newNode.right = null;
+            if(newNode.key.compareTo(nodeSpot.key) < 0)
+                nodeSpot.left = newNode;  //newNode is nodeSpot's L child
+            else
+                nodeSpot.right = newNode; //newNode is nodeSpot's R child
+            size++;
+        }*/
+        Node nodeSpot = find(key);
+
+        if(root == null) {
+            root = new Node(key, value, null, false);  //new node inserted is red
+            root.left = null;
+            root.right = null;
+            size++;
+        }else if(nodeSpot == null) {  // key wasn't found in tree, no duplicate keys
+            Node p = null;  // above current - predecessor
+            Node c = root;  //current
+            Node n = new Node(key, value, null, true);  //node to insert
+
+            while (c != null) {  //have to search for spot to insert
+                p = c;
+                if (key.compareTo(c.key) < 0)
+                    c = c.left;
+                else
+                    c = c.right;
+            }
+            n.parent = p;  //setting n's parent to node above it
+            if (key.compareTo(p.key) < 0)  //update parent's children
+                p.left = n;
+            else
+                p.right = n;
+            n.left = null;  //set new node's children to null
+            n.right = null;
+            size++;
+        }
     }
 
     public void delete(String key) {
@@ -98,12 +160,28 @@ public class RedBlackTree<E> {
         // TODO - Search for the node with the given key
         // If the key exists in the tree, return the Node where it is located
         // Otherwise, return null
+        Node n = root;
+
+        while(n != null){
+            if(key.compareTo(n.key) == 0) {
+                return n;
+            }else if(key.compareTo(n.key) < 0) {  //key is less
+                n = n.left;
+            }else if(key.compareTo(n.key) > 0) {  //key is greater
+                n = n.right;
+            }
+        }
         return null;
     }
 
     public E getValue(String key) {
         // TODO - Use find() to locate the node with the given key and return its value
         // If the key does not exist, return null
+        Node c = find(key);
+
+        if(c != null && c.key.equals(key)) {
+            return c.value;
+        }
         return null;
     }
 
