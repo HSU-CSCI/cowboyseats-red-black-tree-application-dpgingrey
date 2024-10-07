@@ -77,35 +77,17 @@ public class RedBlackTree<E> {
         // 2. Recolor and rotate to restore Red-Black Tree properties.
         // Make sure to add 1 to size if node is successfully added
 
-        /*Node nodeSpot = find(key);
-        Node newNode;
+        Node nodeSpot = find(key);
+        Node n = new Node(key, value, null, true);  //node to insert
 
         if(root == null) {
             root = new Node(key, value, null, true);  //new node inserted is red
             root.left = null;
             root.right = null;
             size++;
-        }else if(! (nodeSpot.key.equals(key)) ){
-            newNode = new Node(key, value, nodeSpot, true);  //new node inserted is red
-            newNode.left = null;
-            newNode.right = null;
-            if(newNode.key.compareTo(nodeSpot.key) < 0)
-                nodeSpot.left = newNode;  //newNode is nodeSpot's L child
-            else
-                nodeSpot.right = newNode; //newNode is nodeSpot's R child
-            size++;
-        }*/
-        Node nodeSpot = find(key);
-
-        if(root == null) {
-            root = new Node(key, value, null, false);  //new node inserted is red
-            root.left = null;
-            root.right = null;
-            size++;
         }else if(nodeSpot == null) {  // key wasn't found in tree, no duplicate keys
             Node p = null;  // above current - predecessor
             Node c = root;  //current
-            Node n = new Node(key, value, null, true);  //node to insert
 
             while (c != null) {  //have to search for spot to insert
                 p = c;
@@ -123,6 +105,36 @@ public class RedBlackTree<E> {
             n.right = null;
             size++;
         }
+        fixInsertion(n); //this breaks everything
+
+        /*Node nodeSpot = find(key);
+        Node z = new Node(key, value, null, true);  //color is red
+        Node y = null;
+        Node x = root;
+
+        if(nodeSpot == null) {  //key isn't in tree
+            while (x != null) {  //find spot to insert
+                y = x;
+                if (z.key.compareTo(x.key) < 0) {
+                    x = x.left;
+                }else {
+                    x = x.right;
+                }
+            }
+            z.parent = y;
+            if(y == null) {
+                root = z;
+            }else if(z.key.compareTo(y.key) < 0) {
+                y.left = z;
+            }else {
+                y.right = z;
+            }
+            z.left = null;
+            z.right = null;
+            //z.color = true;
+            size++;
+        }
+        fixInsertion(z);*/
     }
 
     public void delete(String key) {
@@ -133,27 +145,214 @@ public class RedBlackTree<E> {
         // 3. Node to be deleted has two children
         // Additionally, you must handle rebalancing after deletion to restore Red-Black Tree properties
         // make sure to subtract one from size if node is successfully added
+
+        Node z = find(key); //deleteNode
+        Node y;
+        Node x;
+        boolean yOgColor;
+
+        if(z != null){  //node was found in tree
+            y = z;
+            yOgColor = y.color;
+            if(z.left == null){             //Case 1 - z's L child is null
+                x = z.right;
+                transplant(z,z.right);
+            }else if(z.right == null) {     //Case 2 - z's R child is null
+                x = z.left;
+                transplant(z, z.left);
+            }else{                          //Case 3 - neither of z's children are null
+                y = getMinimumKey(z.right);
+                yOgColor = y.color;
+                x = y.right;
+                if(y.parent == z) {
+                    x.parent = y;
+                }else{
+                    transplant(z,y);
+                    y.right = z.right;
+                    y.right.parent = y;
+                }
+                transplant(z,y);
+                y.left = z.left;
+                y.left.parent = y;
+                y.color = z.color;
+            }
+            if(yOgColor == false)
+                fixDeletion(x);
+            size--;
+        }
+    }
+
+    //Helps move subtrees within a tree
+    public void transplant(Node c, Node p){
+        //p is one of c's child
+        if(c.parent == null) {  // if c is the root
+            root = p;
+        }else if(c == c.parent.left) {  // c is a L child in the tree
+            c.parent.left = p;
+        }else {  // c is a R child in the tree
+            c.parent.right = p;
+        }
+        p.parent = c.parent;  //removes connection between c & p
+    }
+
+    public Node getMinimumKey(Node current){
+        while(current.left != null){
+            current = current.left;
+        }
+        return current;
     }
 
     private void fixInsertion(Node node) {
         // TODO - Implement the fix-up procedure after insertion
         // Ensure that Red-Black Tree properties are maintained (recoloring and rotations).
         // Hint: You will need to deal with red-red parent-child conflicts
+        Node u;
+
+        while(node.parent.color == true){  //while the color is red
+            if(node.parent == node.parent.parent.left){  //if parent is a L child
+                u = node.parent.parent.right;   // u = node's uncle
+                if(u.color == true){  // case 1 - node's uncle is red
+                    node.parent.color = false;
+                    u.color = false;
+                    node.parent.parent.color = true;
+                    node = node.parent.parent;      //recursively move up tree
+                } else {  //uncle is black
+                    if (node == node.parent.right) {  //case 2 - node's unc = black(tri), node is a R child
+                        node = node.parent;           // node takes place of parent
+                        rotateLeft(node);             //rotate in opposite direction of node
+                    }//else {
+                        //node is L child of parent
+                        node.parent.color = false; //* case 3 starts here - node's unc = black(line)
+                        node.parent.parent.color = true;  //
+                        rotateRight(node.parent.parent);
+                    //}
+                }
+            }else{  //if parent is a R child
+                u = node.parent.parent.left;
+                if(u.color == true){
+                    node.parent.color = false;
+                    u.color = false;
+                    node.parent.parent.color = true;
+                    node = node.parent.parent;
+                } else {
+                    if (node == node.parent.left) {
+                        node = node.parent;
+                        rotateRight(node);
+                    }else {
+                        node.parent.color = false; //color node black
+                        node.parent.parent.color = true;  //color node red
+                        rotateLeft(node.parent.parent);
+                    }
+                }
+            }
+        }
+        root.color = false;  //case 0 - node is black
     }
 
     private void fixDeletion(Node node) {
         // TODO - Implement the fix-up procedure after deletion
         // Ensure that Red-Black Tree properties are maintained (recoloring and rotations).
+        Node w; //node's sibling
+
+        while(node != null && node.color){
+            if(node == node.parent.left){
+               w = node.parent.right;
+
+               if(w.color == true){
+                   w.color = false; //new color is black
+                   node.parent.color = true;
+                   rotateLeft(node.parent);
+                   w = node.parent.right;
+               }
+
+               if(w.left.color == false && w.right.color == false){
+                   w.color = true;
+                   node = node.parent;
+               }else{
+                   if(w.right.color == false){
+                       w.left.color = false;
+                       w.color = true;
+                       rotateRight(w);
+                       w = node.parent.right;
+                   }
+
+                   w.color = node.parent.color;
+                   node.parent.color = false;
+                   w.right.color = false;
+                   rotateLeft(node.parent);
+                   node = root;
+               }
+
+            }else{
+                w = node.parent.left;
+
+                if(w.color == true){
+                    w.color = false; //new color is black
+                    node.parent.color = true;
+                    rotateRight(node.parent);
+                    w = node.parent.left;
+                }
+
+                if(w.right.color == false && w.left.color == false){
+                    w.color = true;
+                    node = node.parent;
+                }else {
+                    if (w.left.color == false) {
+                        w.right.color = false;
+                        w.color = true;
+                        rotateLeft(w);
+                        w = node.parent.left;
+                    }
+
+                    w.color = node.parent.color;
+                    node.parent.color = false;
+                    w.left.color = false;
+                    rotateRight(node.parent);
+                    node = root;
+                }
+            }
+        }
     }
 
     private void rotateLeft(Node node) {
         // TODO - Implement left rotation
         // Left rotation is used to restore balance after insertion or deletion
+        Node y = node.right;
+        node.right = y.left;  //y's left subtree into x's right subtree
+
+        if(y.left != null)
+            y.left.parent = node;
+        y.parent = node.parent;
+
+        if(node.parent == null){
+            root = y;
+        }else if(node == node.parent.left){
+            node.parent.left = y;
+        }else{
+            node.parent.right = y;
+        }
+
+        node.left = node;
+        node.parent = y;
     }
 
     private void rotateRight(Node node) {
         // TODO - Implement right rotation
         // Right rotation is used to restore balance after insertion or deletion
+        Node y = node.left;
+        node.left = y.right;  //y's right subtree into x's left subtree
+        if(y.right != null)
+            y.right.parent = node;
+        y.parent = node.parent;
+        if(node.parent == null){
+            root = y;
+        }else if(node == node.parent.right){
+            node.parent.right = y;
+        }else{
+            node.parent.left = y;
+        }
+        node.right = node;
+        node.parent = y;
     }
 
     Node find(String key) {
