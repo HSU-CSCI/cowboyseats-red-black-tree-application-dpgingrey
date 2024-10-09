@@ -57,9 +57,9 @@ public class RedBlackTree<E> {
             int count = 1;
 
             while(cur.parent != null){
+                cur = cur.parent;
                 if(cur.color == false)  //false = black
                     count++;
-                cur = cur.parent;
             }
             return count;
         }
@@ -167,7 +167,7 @@ public class RedBlackTree<E> {
                 if(y.parent == z) {
                     x.parent = y;
                 }else{
-                    transplant(z,y);
+                    transplant(y,x);
                     y.right = z.right;
                     y.right.parent = y;
                 }
@@ -176,9 +176,9 @@ public class RedBlackTree<E> {
                 y.left.parent = y;
                 y.color = z.color;
             }
+            size--;
             if(yOgColor == false)
                 fixDeletion(x);
-            size--;
         }
     }
 
@@ -208,44 +208,51 @@ public class RedBlackTree<E> {
         // Hint: You will need to deal with red-red parent-child conflicts
         Node u;
 
-        while(node.parent.color == true){  //while the color is red
-            if(node.parent == node.parent.parent.left){  //if parent is a L child
-                u = node.parent.parent.right;   // u = node's uncle
-                if(u.color == true){  // case 1 - node's uncle is red
-                    node.parent.color = false;
-                    u.color = false;
-                    node.parent.parent.color = true;
-                    node = node.parent.parent;      //recursively move up tree
-                } else {  //uncle is black
-                    if (node == node.parent.right) {  //case 2 - node's unc = black(tri), node is a R child
-                        node = node.parent;           // node takes place of parent
-                        rotateLeft(node);             //rotate in opposite direction of node
-                    }//else {
-                        //node is L child of parent
-                        node.parent.color = false; //* case 3 starts here - node's unc = black(line)
-                        node.parent.parent.color = true;  //
-                        rotateRight(node.parent.parent);
-                    //}
-                }
-            }else{  //if parent is a R child
-                u = node.parent.parent.left;
-                if(u.color == true){
-                    node.parent.color = false;
-                    u.color = false;
-                    node.parent.parent.color = true;
-                    node = node.parent.parent;
-                } else {
-                    if (node == node.parent.left) {
-                        node = node.parent;
-                        rotateRight(node);
-                    }else {
-                        node.parent.color = false; //color node black
-                        node.parent.parent.color = true;  //color node red
-                        rotateLeft(node.parent.parent);
+        //if(node.parent == null){
+        //    node.color = false;
+        //    return;
+        //}
+
+            while (node.parent != null && node.parent.color == true) {  //while the color is red
+                //if(node.parent.parent.right != null && node.parent.parent.left != null) {
+                    if (node.parent == node.parent.parent.left) {  //if parent is a L child
+                        u = node.parent.parent.right;   // u = node's uncle
+                        if (u.color == true) {  // case 1 - node's uncle is red
+                            node.parent.color = false;
+                            u.color = false;
+                            node.parent.parent.color = true;
+                            node = node.parent.parent;      //recursively move up tree
+                        } else {  //uncle is black
+                            if (node == node.parent.right) {  //case 2 - node's unc = black(tri), node is a R child
+                                node = node.parent;           // node takes place of parent
+                                rotateLeft(node);             //rotate in opposite direction of node
+                            } else {
+                                //node is L child of parent
+                                node.parent.color = false; //* case 3 starts here - node's unc = black(line)
+                                node.parent.parent.color = true;  //
+                                rotateRight(node.parent.parent);
+                            }
+                        }
+                    } else {  //if parent is a R child
+                        u = node.parent.parent.left;
+                        if (u.color == true) {
+                            node.parent.color = false;
+                            u.color = false;
+                            node.parent.parent.color = true;
+                            node = node.parent.parent;
+                        } else {
+                            if (node == node.parent.left) {
+                                node = node.parent;
+                                rotateRight(node);
+                            } else {
+                                node.parent.color = false; //color node black
+                                node.parent.parent.color = true;  //color node red
+                                rotateLeft(node.parent.parent);
+                            }
+                        }
                     }
-                }
+                //}
             }
-        }
         root.color = false;  //case 0 - node is black
     }
 
@@ -254,7 +261,7 @@ public class RedBlackTree<E> {
         // Ensure that Red-Black Tree properties are maintained (recoloring and rotations).
         Node w; //node's sibling
 
-        while(node != null && node.color){
+        while(node.parent != null && node.color){
             if(node == node.parent.left){
                w = node.parent.right;
 
