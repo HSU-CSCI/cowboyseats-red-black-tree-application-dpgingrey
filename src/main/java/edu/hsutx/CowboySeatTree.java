@@ -1,5 +1,6 @@
 package edu.hsutx;
 
+
 /**
  * CowboySeatTree is a Red-Black Tree that stores SeatAssignment objects as the values for the tree nodes.
  * It extends the generic RedBlackTree class and specializes it for the SeatAssignment value type.

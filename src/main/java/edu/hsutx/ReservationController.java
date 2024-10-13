@@ -30,15 +30,16 @@ public class ReservationController {
                 String[] values = line.split(",");
 
                 // Extract the four fields
-                char command = values[0].charAt(0);  // The first field is a single character
+                char command = values[0].charAt(0);  // The first field is a single character (a for add, d for delete)
                 String name = values[1];             // The second field is a string (name)
-                String seatStr = values[2];          // The third field is a string (seatStr)
-                int preference = Integer.parseInt(values[3]);  // The fourth field is an integer (preference)
+                String seatStr = values[2];          // The third field is a string (seatStr - # of seats to reserve)
+                int preference = Integer.parseInt(values[3]);  // The fourth field is an integer (seat preference)
 
                 // The first field is either 'a' for add a reservation or 'd' for delete
                 if (command=='a') {
                     // add a reservation
                     int seatsNeeded = Integer.parseInt(seatStr);
+                    //delete # of open seats, insert new seat reservation & insert unassigned blocks to right and left
                     SeatAssignment emptyBlock = seatTree.getUnassignedBlockOverThreshold(seatsNeeded);
                     if ( emptyBlock == null) {
                         System.out.println("Error adding "+seatsNeeded+" seats for "+ name + " -- no sufficient free block found.");
@@ -73,14 +74,45 @@ public class ReservationController {
                     view.updateTreeVisualization(seatTree);
 
                 } else if (command=='d') {
-                    // delete a reservation
+                    // delete a reservation, deletes by name
                     // TODO - implement delete code
+                    String deleteName = name;
+                    SeatAssignment deleteSeat = null;
+
+                    deleteSeat = findByOwner(seatTree.root, name);  //method below
+
+                    if(deleteSeat != null){
+                        seatTree.delete(deleteSeat);view.updateTreeVisualization(seatTree);
+                        System.out.println("Deleted reservation for " + name);
+                    } else {
+                        System.out.println("No reservation found for " + name);
+                    }
                 }
 
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private SeatAssignment findByOwner(CowboySeatTree.Node node, String name){
+        if(node == null){
+            return null;  //No node to check
+        }
+
+        // Check the current node
+        if (name.equals(node.value.getOwner())) {
+            return node.value; // Found the matching SeatAssignment
+        }
+
+        // Search in the left subtree
+        SeatAssignment leftResult = findByOwner(node.left, name);
+        if (leftResult != null) {
+            return leftResult; // Found in left subtree
+        }
+
+        // Search in the right subtree
+        return findByOwner(node.right, name); // Continue searching in right subtree
     }
 
 }

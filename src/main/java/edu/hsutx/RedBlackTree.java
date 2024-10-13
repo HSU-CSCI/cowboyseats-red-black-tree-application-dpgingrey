@@ -106,35 +106,6 @@ public class RedBlackTree<E> {
             size++;
         }
         fixInsertion(n); //this breaks everything
-
-        /*Node nodeSpot = find(key);
-        Node z = new Node(key, value, null, true);  //color is red
-        Node y = null;
-        Node x = root;
-
-        if(nodeSpot == null) {  //key isn't in tree
-            while (x != null) {  //find spot to insert
-                y = x;
-                if (z.key.compareTo(x.key) < 0) {
-                    x = x.left;
-                }else {
-                    x = x.right;
-                }
-            }
-            z.parent = y;
-            if(y == null) {
-                root = z;
-            }else if(z.key.compareTo(y.key) < 0) {
-                y.left = z;
-            }else {
-                y.right = z;
-            }
-            z.left = null;
-            z.right = null;
-            //z.color = true;
-            size++;
-        }
-        fixInsertion(z);*/
     }
 
     public void delete(String key) {
@@ -165,7 +136,8 @@ public class RedBlackTree<E> {
                 yOgColor = y.color;
                 x = y.right;
                 if(y.parent == z) {
-                    x.parent = y;
+                    if(x != null)
+                        x.parent = y;
                 }else{
                     transplant(y,x);
                     y.right = z.right;
@@ -185,14 +157,18 @@ public class RedBlackTree<E> {
     //Helps move subtrees within a tree
     public void transplant(Node c, Node p){
         //p is one of c's child
-        if(c.parent == null) {  // if c is the root
-            root = p;
-        }else if(c == c.parent.left) {  // c is a L child in the tree
-            c.parent.left = p;
-        }else {  // c is a R child in the tree
-            c.parent.right = p;
+        if(c != null) {
+            if (c.parent == null) {  // if c is the root
+                root = p;
+            } else if (c == c.parent.left) {  // c is a L child in the tree
+                c.parent.left = p;
+            } else {  // c is a R child in the tree
+                c.parent.right = p;
+            }
+            if(p != null){  //cannot access p.parent if p is null
+                p.parent = c.parent;  //removes connection between c & p
+            }
         }
-        p.parent = c.parent;  //removes connection between c & p
     }
 
     public Node getMinimumKey(Node current){
@@ -208,51 +184,44 @@ public class RedBlackTree<E> {
         // Hint: You will need to deal with red-red parent-child conflicts
         Node u;
 
-        //if(node.parent == null){
-        //    node.color = false;
-        //    return;
-        //}
-
-            while (node.parent != null && node.parent.color == true) {  //while the color is red
-                //if(node.parent.parent.right != null && node.parent.parent.left != null) {
-                    if (node.parent == node.parent.parent.left) {  //if parent is a L child
-                        u = node.parent.parent.right;   // u = node's uncle
-                        if (u.color == true) {  // case 1 - node's uncle is red
-                            node.parent.color = false;
-                            u.color = false;
-                            node.parent.parent.color = true;
-                            node = node.parent.parent;      //recursively move up tree
-                        } else {  //uncle is black
-                            if (node == node.parent.right) {  //case 2 - node's unc = black(tri), node is a R child
-                                node = node.parent;           // node takes place of parent
-                                rotateLeft(node);             //rotate in opposite direction of node
-                            } else {
-                                //node is L child of parent
-                                node.parent.color = false; //* case 3 starts here - node's unc = black(line)
-                                node.parent.parent.color = true;  //
-                                rotateRight(node.parent.parent);
-                            }
-                        }
-                    } else {  //if parent is a R child
-                        u = node.parent.parent.left;
-                        if (u.color == true) {
-                            node.parent.color = false;
-                            u.color = false;
-                            node.parent.parent.color = true;
-                            node = node.parent.parent;
-                        } else {
-                            if (node == node.parent.left) {
-                                node = node.parent;
-                                rotateRight(node);
-                            } else {
-                                node.parent.color = false; //color node black
-                                node.parent.parent.color = true;  //color node red
-                                rotateLeft(node.parent.parent);
-                            }
-                        }
+        while (node.parent != null && node.parent.color == true) {  //while the color is red
+            if (node.parent == node.parent.parent.left) {  //if parent is a L child
+                u = node.parent.parent.right;   // u = node's uncle
+                if (u != null && u.color == true) {  // case 1 - node's uncle is red
+                    node.parent.color = false;
+                    u.color = false;
+                    node.parent.parent.color = true;
+                    node = node.parent.parent;      //recursively move up tree
+                } else {  //uncle is black
+                    if (node == node.parent.right) {  //case 2 - node's unc = black(tri), node is a R child
+                        node = node.parent;           // node takes place of parent
+                        rotateLeft(node);             //rotate in opposite direction of node
+                    } else {
+                        //node is L child of parent
+                        node.parent.color = false; //* case 3 starts here - node's unc = black(line)
+                        node.parent.parent.color = true;
+                        rotateRight(node.parent.parent);
                     }
-                //}
+                }
+            } else if(node.parent == node.parent.parent.right){  //if parent is a R child
+                u = node.parent.parent.left;
+                if (u != null && u.color == true) {
+                    node.parent.color = false;
+                    u.color = false;
+                    node.parent.parent.color = true;
+                    node = node.parent.parent;
+                } else {
+                    if (node == node.parent.left) {
+                        node = node.parent;
+                        rotateRight(node);
+                    } else {
+                        node.parent.color = false; //color node black
+                        node.parent.parent.color = true;  //color node red
+                        rotateLeft(node.parent.parent);
+                    }
+                }
             }
+        }
         root.color = false;  //case 0 - node is black
     }
 
@@ -261,7 +230,10 @@ public class RedBlackTree<E> {
         // Ensure that Red-Black Tree properties are maintained (recoloring and rotations).
         Node w; //node's sibling
 
-        while(node.parent != null && node.color){
+        if(node == null)
+            return;
+
+        while(node != root && node.color == false){
             if(node == node.parent.left){
                w = node.parent.right;
 
@@ -272,11 +244,12 @@ public class RedBlackTree<E> {
                    w = node.parent.right;
                }
 
-               if(w.left.color == false && w.right.color == false){
+               if((w.left == null || w.left.color == false) && (w.right == null || w.right.color == false) ){
+                   //if w.left/right == null -> null node is a black node
                    w.color = true;
                    node = node.parent;
                }else{
-                   if(w.right.color == false){
+                   if(w.right == null || w.right.color == false){
                        w.left.color = false;
                        w.color = true;
                        rotateRight(w);
@@ -300,12 +273,13 @@ public class RedBlackTree<E> {
                     w = node.parent.left;
                 }
 
-                if(w.right.color == false && w.left.color == false){
+                if ( (w.right == null || w.right.color == false) && (w.left == null || w.left.color == false) ) {
                     w.color = true;
                     node = node.parent;
-                }else {
-                    if (w.left.color == false) {
-                        w.right.color = false;
+                } else {
+                    if (w.left == null || w.left.color == false) {
+                        if(w.right != null)
+                            w.right.color = false;
                         w.color = true;
                         rotateLeft(w);
                         w = node.parent.left;
@@ -313,12 +287,14 @@ public class RedBlackTree<E> {
 
                     w.color = node.parent.color;
                     node.parent.color = false;
-                    w.left.color = false;
+                    if(w.left != null)
+                        w.left.color = false;
                     rotateRight(node.parent);
                     node = root;
                 }
             }
         }
+        node.color = false;
     }
 
     private void rotateLeft(Node node) {
@@ -339,8 +315,8 @@ public class RedBlackTree<E> {
             node.parent.right = y;
         }
 
-        node.left = node;
-        node.parent = y;
+        y.left = node;     //node = L child of y
+        node.parent = y;   //node's parent = y
     }
 
     private void rotateRight(Node node) {
@@ -358,8 +334,9 @@ public class RedBlackTree<E> {
         }else{
             node.parent.left = y;
         }
-        node.right = node;
-        node.parent = y;
+
+        y.right = node;   //node = R child of y
+        node.parent = y;  //node's parent = y
     }
 
     Node find(String key) {
